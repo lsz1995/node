@@ -1,1 +1,12 @@
-#ddd
+View
+viewsets.GenericViewSet(viewset)   -drf
+  GenericAPIView                   -drf
+          APIView                  -drf
+            View                    -django
+mixin
+  CreatModelMixin       
+  ListModelMixin
+  UpdateModelMixinModelMixin
+  RetrieveModelMixin
+  DestoryModelMixin
+            
