@@ -1,0 +1,84 @@
+nginx xxx.confg 配置好
+nginx 指定培训文件.conf启动: /usr/local/nginx/sbin/nginx(配置好环境变量可以直接写 nginx)  -c /usr/local/nginx/conf/nginx.conf
+uwsgi 启动  ： 1.workon mxonline            #启用环境变量
+              2.uwsgi -i 你的目录/Mxonline/conf/uwsgi.ini  #指定django项目启动  用uwsgi启动  
+
+///////////////////////////////////xxx.confg/////////////////////////////////
+
+
+
+# the upstream component nginx needs to connect to
+http{
+
+    include       mime.types;
+    default_type  application/octet-stream;
+upstream django {
+# server unix:///path/to/your/mysite/mysite.sock; # for a file socket
+server 127.0.0.1:8000; # for a web port socket (we'll use this first)
+}
+# configuration of the server
+
+server {
+# the port your site will be served on
+listen   8001   ;
+# the domain name it will serve for
+server_name xx.xxx.xx.xxx; # substitute your machine's IP address or FQDN
+charset     utf-8;
+
+# max upload size
+client_max_body_size 75M;   # adjust to taste
+
+# Django media
+location /media  {
+    alias /home/cj/lsz/zfcg_api/media;  # 指向django的media目录
+}
+
+location /static {
+    alias /home/cj/lsz/zfcg_api/static; # 指向django的static目录
+}
+
+
+# Finally, send all non-media requests to the Django server.
+location / {
+    uwsgi_pass  127.0.0.1:8000;
+    include     /home/cj/software/nginx/conf/uwsgi_params; # the uwsgi_params file you installed
+}
+}
+}
+events {
+  worker_connections  1024;  ## Default: 1024
+}
+///////////////////////////////////xxx.confg/////////////////////////////////
+
+///////////////////////////////////xxxx.ini/////////////////////////////////
+
+# mysite_uwsgi.ini file
+[uwsgi]
+
+# Django-related settings
+# the base directory (full path)
+chdir           = /home/cj/lsz/zfcg_api
+# Django's wsgi file
+module          = zfcg_api.wsgi
+# the virtualenv (full path)
+virtualenv = /home/cj/.virtualenvs/lsz_django_1.11
+
+# process-related settings
+# master
+master          = true
+# maximum number of worker processes
+processes       = 10
+# the socket (use the full path to be safe
+socket          = 127.0.0.1:8000
+# ... with appropriate permissions - may be needed
+chmod-socket    = 666
+# clear environment on exit
+vacuum          = true
+logto = /tmp/mylog.log
+
+
+
+
+
+
+
