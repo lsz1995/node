@@ -1,0 +1,121 @@
+# -*- coding: utf-8 -*-
+
+import datetime
+import requests
+import json
+
+from sqlalchemy import Column, String, create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.types import INTEGER
+from sqlalchemy.dialects.mysql import LONGTEXT
+
+
+# 数据库配置
+USER = "root"
+PASSWORD = "123456"
+HOST = "localhost"
+PORT = "3306"
+NAME = "news_spider_data"
+
+# 创建对象的基类:
+Base = declarative_base()
+
+
+# 定义 sina_news_data 对象:
+class sina_news_data(Base):
+    # 表的名字:
+    __tablename__ = 'sina_news_table'
+
+    # 表的结构:
+    id = Column(INTEGER, primary_key=True, nullable=False, autoincrement=True)
+    publish_time = Column(String(30))
+    url = Column(String(300), nullable=False)
+    title = Column(String(100))
+    media_name = Column(String(100))
+    keywords = Column(String(100))
+    summary = Column(String(300))
+    intro = Column(String(300))
+    wapurl = Column(String(300))
+    wapsummary = Column(String(300))
+    source_url = Column(String(300))
+    text = Column(LONGTEXT, nullable=False)
+    crawl_time = Column(String(30), nullable=False)
+
+
+# 初始化数据库连接:
+engine = create_engine('mysql+pymysql://{}:{}@{}:{}/{}'.format(USER, PASSWORD, HOST, PORT, NAME))
+# '数据库类型+数据库驱动名称://用户名:口令@机器地址:端口号/数据库名'
+
+# 创建数据表
+Base.metadata.create_all(engine)
+
+# 创建DBSession类型:
+DBSession = sessionmaker(bind=engine)
+
+
+def save_data_to_db(data):
+    # 将数据存入数据库
+
+    # 插入数据
+    # 创建session对象:
+    session = DBSession()
+
+    # 创建新 sina_news_data 对象:
+    new_sina_news_data = sina_news_data(
+        publish_time=data.get('publish_time', ''),
+        url=data.get('url', ''),
+        title=data.get('title', ''),
+        media_name=data.get('media_name', ''),
+        keywords=data.get('keywords', ''),
+        summary=data.get('summary', ''),
+        intro=data.get('intro', ''),
+        wapurl=data.get('wapurl', ''),
+        wapsummary=data.get('wapsummary', ''),
+        source_url=data.get('source_url', ''),
+        text=data.get('text', ''),
+        crawl_time=data.get('crawl_time', ''),
+    )
+
+    # 添加到session:
+    session.add(new_sina_news_data)
+    # 提交即保存到数据库:
+    session.commit()
+    # 关闭session:
+    session.close()
+
+
+
+if __name__ == '__main__':
+    headers = {
+
+    }
+
+    url = 'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2509&k=&num=10&page=1'
+    r_str = requests.get(url=url, headers=headers, timeout=10).text
+    json_dict = json.loads(r_str)
+    news_list = json_dict.get('result', '').get('data', '')
+    for news_dict in news_list:
+        data = {
+            'publish_time': news_dict.get('ctime', ''),
+            'url': news_dict.get('url', ''),
+            'title': news_dict.get('title', ''),
+            'media_name': news_dict.get('media_name', ''),
+            'keywords': news_dict.get('keywords', ''),
+            'summary': news_dict.get('summary', ''),
+            'intro': news_dict.get('intro', ''),
+            'wapurl': news_dict.get('wapurl', ''),
+            'wapsummary': news_dict.get('wapsummary', ''),
+        }
+
+        temp_data = {
+            'source_url': 'http://www.source_url.com',
+            'text': '正文正文正文正文正文正文正文正文正文',
+            'crawl_time': str(datetime.datetime.now()),
+        }
+
+        data.update(temp_data)
+
+        save_data_to_db(data)
+
+    print('ok')
