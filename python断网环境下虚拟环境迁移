@@ -1,0 +1,3 @@
+主机A： pip freeze >requirements.txt  
+主机A：pip download  -r requirements.txt  -d  ./packages  
+主机B：pip install --no-index --find-links= ./packages -r requirements.txt
