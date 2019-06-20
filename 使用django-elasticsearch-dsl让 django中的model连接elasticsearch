@@ -1,0 +1,93 @@
+#使用django-elasticsearch-dsl让 django中的model连接elasticsearch
+
+1.版本 
+  python 3.6.6
+  django 1.11
+  elasticsearch 5.1.1
+  django-elasticsearch-dsl     0.5.1
+
+2.setting里设置
+  ELASTICSEARCH_DSL = {
+     ' default '：{
+         ' hosts '：' localhost：9200 '
+    }，
+}
+
+3.创建一个app的model
+class Car(models.Model):
+    name = models.CharField()
+    color = models.CharField()
+    description = models.TextField()
+    type = models.IntegerField(choices=[
+        (1, "Sedan"),
+        (2, "Truck"),
+        (4, "SUV"),
+    ])
+4.创建索引文件 documents.py
+
+from django_elasticsearch_dsl import DocType, Index
+from .models import Car
+
+# Name of the Elasticsearch index
+car = Index('cars')
+# See Elasticsearch Indices API reference for available settings
+car.settings(
+    number_of_shards=1,
+    number_of_replicas=0
+)
+
+
+@car.doc_type
+class CarDocument(DocType):
+    class Meta:
+        model = Car # The model associated with this DocType
+
+        # The fields of the model you want to be indexed in Elasticsearch
+        fields = [
+            'name',
+            'color',
+            'description',
+            'type',
+        ]
+
+        # Ignore auto updating of Elasticsearch when a model is saved
+        # or deleted:
+        # ignore_signals = True
+        # Don't perform an index refresh after every update (overrides global setting):
+        # auto_refresh = False
+        # Paginate the django queryset used to populate the index with the specified size
+        # (by default there is no pagination)
+        # queryset_pagination = 5000
+        
+4.创建索引
+./manage.py search_index --rebuild
+
+5.创建数据
+car = Car(
+    name="Car one",
+    color="red",
+    type=1,
+    description="A beautiful car"
+)
+car.save()
+6.查询方式
+#查询一个数据表（index）里的所有数据和统计数据的数量
+        a = CarDocument.search()  # 1.Car这张表的里的所有数据
+        CarDocument.search().count()#数量统计
+
+#精确查询   
+        s = CarDocument.search().filter("term", color="red")
+        注： 如果结果是中文， 只能查询一个子， 因为在es中把所有的中文都做了分词
+        例如s = CarDocument.search().filter("term", color="红色")
+        这样是查不到数据的 
+        解决方法1：但是这种方法会把橘红色也匹配出来
+        q = Q('bool', must=[Q('term', name='红'), Q('term', name='色')])
+        s = CarDocument.search().query(q)
+
+#模糊匹配
+        e = CarDocument.search().query('match',name ='张二一',)#模糊匹配
+        注：即时是姓名叫张一二 ， 也能匹配出来
+#在多个字段中模糊匹配
+        q = Q("multi_match", query='张', fields=['name', 'color'])
+        f = CarDocument.search().query(q)
+        注：在name和color中寻找包含张的 数据
