@@ -87,6 +87,10 @@ car.save()
 #模糊匹配
         e = CarDocument.search().query('match',name ='张二一',)#模糊匹配
         注：即时是姓名叫张一二 ， 也能匹配出来
+        
+        #多条件模糊匹配
+        q = Q('bool', must=[Q('match', name='张一二'),Q('match',color='一区')])# 匹配到叫张一二 和病区为一区的人
+        g = CarDocument.search().query(q)
 #在多个字段中模糊匹配
         q = Q("multi_match", query='张', fields=['name', 'color'])
         f = CarDocument.search().query(q)
