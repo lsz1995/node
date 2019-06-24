@@ -31,7 +31,7 @@ def read(q):
 
 if __name__ == '__main__':
     # 父进程创建Queue，并传给各个子进程：
-    q = Queue()
+    q = Queue()#队列
     pw = Process(target=write, args=(q,))
     pr = Process(target=read, args=(q,))
     # 启动子进程pw，写入:
