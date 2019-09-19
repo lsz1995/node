@@ -48,6 +48,11 @@ nginx 做成系统服务
 
 https://www.cnblogs.com/edward2013/p/5506588.html
 
+下载工具：HTTP：//repo.jenkins-ci.org/releases/com/sun/winsw/winsw/1.18/winsw-1.18-bin.exe
+
+
+
+
 2.############################  apache  + mod_wsgi ###########################
 配置好文件
 注册
