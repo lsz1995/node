@@ -1,0 +1,73 @@
+因为工作需要在winserver下部署django ，
+查阅一番资料后 决定采用apache 来部署
+又因为服务器使用了 网络映射驱动盘 ， 但是apache 部署静态文件的时候找不上网络映射盘， 所以决定用nginx解决这个问题
+
+链接：https://pan.baidu.com/s/1CB2fpv31bO3x2JmFFgFeyQ 
+提取码：n5us 
+复制这段内容后打开百度网盘手机App，操作更方便哦
+
+1.####################################nginx   #######################################
+
+winserver 2008 r2 下的nginx 
+
+
+解压压缩包到任意位置
+
+配置好nginx 的配置文件
+
+启动nginx    
+1、启动：
+
+C:\server\nginx-1.0.2>start nginx
+
+
+
+C:\server\nginx-1.0.2>nginx.exe
+
+注：建议使用第一种，第二种会使你的cmd窗口一直处于执行中，不能进行其他命令操作。
+
+2、停止：
+
+C:\server\nginx-1.0.2>nginx.exe -s stop
+
+或
+
+C:\server\nginx-1.0.2>nginx.exe -s quit
+
+
+注：stop是快速停止nginx，可能并不保存相关信息；quit是完整有序的停止nginx，并保存相关信息。
+
+3、重新载入Nginx：
+
+C:\server\nginx-1.0.2>nginx.exe -s reload
+
+
+#################
+
+nginx 做成系统服务
+
+https://www.cnblogs.com/edward2013/p/5506588.html
+
+2.############################  apache  + mod_wsgi ###########################
+配置好文件
+注册
+bin：
+httpd -k install -n apache2.4
+
+httpd.conf  配置
+
+pip install   mod_wsgi-4.6.7+ap24vc14-cp36-cp36m-win_amd64.whl
+mod_wsgi-express module-config (获取三行  放在httpd.conf 最后)
+
+开启
+net start Apache2.4
+停止
+net stop Apache2.4
+卸载
+sc delete apache2.4
+
+2.############################  apache  ###########################
+
+
+
+
