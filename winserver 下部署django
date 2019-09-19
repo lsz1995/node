@@ -15,25 +15,24 @@ winserver 2008 r2 下的nginx
 
 配置好nginx 的配置文件
 
-启动nginx    
+具体如何配置  参考自己的项目
+
+
+启动nginx    在nginx.exe的目录下
 1、启动：
 
 C:\server\nginx-1.0.2>start nginx
-
-
 
 C:\server\nginx-1.0.2>nginx.exe
 
 注：建议使用第一种，第二种会使你的cmd窗口一直处于执行中，不能进行其他命令操作。
 
 2、停止：
-
 C:\server\nginx-1.0.2>nginx.exe -s stop
 
 或
 
 C:\server\nginx-1.0.2>nginx.exe -s quit
-
 
 注：stop是快速停止nginx，可能并不保存相关信息；quit是完整有序的停止nginx，并保存相关信息。
 
@@ -49,20 +48,113 @@ nginx 做成系统服务
 https://www.cnblogs.com/edward2013/p/5506588.html
 
 下载工具：HTTP：//repo.jenkins-ci.org/releases/com/sun/winsw/winsw/1.18/winsw-1.18-bin.exe
+放入 nginx目录 改名 nginx-service.exe
+在同级目录下创建
+nginx-service.xml 内容如下
 
+<service>
+  <id>nginx</id>
+  <name>Nginx Service</name>
+  <description>High Performance Nginx Service</description>
+  <logpath>D:\xampp\nginx\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+  <executable>D:\xampp\nginx\nginx.exe</executable>
+  <startarguments>-p D:\xampp\nginx</startarguments>
+  <stopexecutable>D:\xampp\nginx\nginx.exe</stopexecutable>
+  <stoparguments>-p D:\xampp\nginx -s stop</stoparguments>
+</service>
+ 
+
+再创建 nginx-service.exe.config
+
+内容如下
+
+<configuration>
+  <startup>
+    <supportedRuntime version="v2.0.50727" />
+    <supportedRuntime version="v4.0" />
+  </startup>
+  <runtime>
+    <generatePublisherEvidence enabled="false"/> 
+  </runtime>
+</configuration>
+
+
+进入cmd   运行  D:\xampp\nginx\nginx-service.exe install  
+在winserver服务里设置成自动 
+就能开机自启动
 
 
 
 2.############################  apache  + mod_wsgi ###########################
+
+mod_wsgi :
+
+pip install   mod_wsgi-4.6.7+ap24vc14-cp36-cp36m-win_amd64.whl
+mod_wsgi-express module-config (获取三行  放在httpd.conf 最后)  apache 配置的时候有用.
+
+
+
+
+apache: 
+
+httpd.conf  配置
 配置好文件
+Define SRVROOT "C:/apache/Apache24"  #设置成你安装的位置
+
+Listen 8000  #监听端口 
+
+#  静态文件  如果在nginx里配置过了  可以不用配置  因为网络映射盘 用apache 配置会导致apache无法启动 ，所以用nginx配置静态文件
+Alias /static C:\GD_ImageManagement\static
+<Directory  C:\GD_ImageManagement\static>
+    Require all granted
+</Directory>
+Alias /media C:\GD_ImageManagement\media
+<Directory  C:\GD_ImageManagement\media>
+    Require all granted
+</Directory>
+Alias /resources C:\image_data
+<Directory  C:\image_data>
+    Require all granted
+</Directory>
+
+#配置项目： 根据你的项目实际位置做更改
+ErrorLog "C:/logs/second_web-error.log"
+CustomLog "C:/logs/second_web-access.log" common
+
+WSGIScriptAlias / "C:/GD_ImageManagement/GD_ImageManagement/wsgi.py"
+
+WSGIPythonPath	"C:/GD_ImageManagement"
+
+<Directory "C:/GD_ImageManagement/GD_ImageManagement">
+
+<Files wsgi.py>
+
+Require all granted
+
+</Files>
+
+</Directory>
+
+#mod_wsgi  或去的三行
+
+LoadFile "c:/python/python36.dll"
+
+LoadModule wsgi_module "C:/python/Lib/site-packages/mod_wsgi/server/mod_wsgi.cp36-win_amd64.pyd"
+
+WSGIPythonHome "c:/python"
+
+
 注册
 bin：
 httpd -k install -n apache2.4
 
-httpd.conf  配置
 
-pip install   mod_wsgi-4.6.7+ap24vc14-cp36-cp36m-win_amd64.whl
-mod_wsgi-express module-config (获取三行  放在httpd.conf 最后)
+
+
 
 开启
 net start Apache2.4
@@ -71,7 +163,7 @@ net stop Apache2.4
 卸载
 sc delete apache2.4
 
-2.############################  apache  ###########################
+############################  apache  + mod_wsgi  ###########################
 
 
 
