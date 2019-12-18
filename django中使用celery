@@ -1,0 +1,160 @@
+在django 中使用celery创建异步任务和定时任务
+
+
+
+
+参考   https://www.cnblogs.com/zivli/p/11517797.html
+
+默认配置好redis环境和python环境
+
+环境：
+amqp==1.4.9
+anyjson==0.3.3
+asgiref==3.2.3
+Babel==2.7.0
+billiard==3.3.0.23
+celery==3.1.26.post2
+Django==1.11
+django-celery==3.2.2
+django-redis==4.11.0
+dnspython==1.16.0
+eventlet==0.25.1
+flower==0.9.0
+greenlet==0.4.15
+importlib-metadata==1.3.0
+kombu==3.0.37
+monotonic==1.5
+more-itertools==8.0.2
+mysqlclient==1.4.5
+Pillow==6.2.1
+pytz==2019.3
+redis==2.10.6
+six==1.13.0
+SQLAlchemy==1.3.12
+sqlparse==0.3.0
+tornado==4.2
+vine==1.3.0
+zipp==0.6.0
+
+##############################1.创建django项目############################################
+
+##############################1.创在manage.py 同级目录下创建   celeryconfig.py 内容如下 ############################################
+###############################将celery 配置导入setting.py       from .celeryconfig import *  ######################
+
+
+import djcelery
+from datetime import timedelta
+djcelery.setup_loader()
+
+#导入app中的 tasks
+CELERY_IMPORTS = [
+    'course.tasks'
+]
+
+#定义队列
+CELERY_QUEUES = {
+    'beat_tasks': {
+        'exchange': 'beat_tasks',
+        'exchange_type': 'direct',
+        'binding_key': 'beat_tasks'
+    },
+    'work_queue': {
+        'exchange': 'work_queue',
+        'exchange_type': 'direct',
+        'binding_key': 'work_queue'
+    }
+}
+CELERY_DEFAULT_QUEUE ='work_tasks'
+
+#防止死锁
+
+CELERYD_FORCE_EXECV = True
+#并发
+CELERYD_CONCURRENCY =4
+
+
+#允许重试
+CELERY_ACKS_LATE =True
+
+#每个worker 最多100个任务
+CELERYD_MAX_TASKS_PER_CHILD =100
+#等待时间
+CELERYD_TASK_TIME_LIMIT = 12 * 30
+
+# BROKER_BACKEND ='redis'
+# BROKER_URL = 'redis://localhost:6379/1'
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/2'
+CELERYBEAT_SCHEDUER='djcelery.schedulers.DATABASE_ERRORS'
+
+BROKER_BACKEND = 'redis'
+BROKER_URL = 'redis://localhost:6379/1'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/2'
+
+
+#定时任务
+CELERYBEAT_SCHEDULE ={
+    'task1':{
+        'task':'course-task',
+        'schedule':timedelta(seconds=5),
+        # 'args':'',
+        'options':{
+            'queue':'beat_tasks'
+        }
+
+    }
+}
+CELERY_ACCEPT_CONTENT = ['pickle', 'json', ]
+
+# 启动 celery
+#python manage.py celery worker -l INFO -P eventlet
+#启动定时器
+#python manage.py celery beat -l INFO
+
+
+##############################2创建django的app 在app中创建tasks.py 创建任务 内容如下 ############################################
+
+import time
+from celery.task import Task
+
+
+class Course(Task):
+    name = 'course-task'
+
+    def run(self, *args, **kwargs):
+        print('start...')
+        time.sleep(3)
+        print(f'args={args},kwargs={kwargs}')
+        print('end task....')
+
+
+##############################3.在view中使用异步任务    views.py    ############################################
+
+from django.http import JsonResponse
+from course.tasks import Course
+
+
+def course(request, *args, **kwargs):
+    # 执行异步任务
+    print("start course...")
+    # Course.delay()
+    # 可以使用apply_async传递参数，指定队列
+    Course.apply_async(args=('hello',), queue='work_queue')
+    print("end course...")
+    return JsonResponse({'result': 'ok'})
+
+
+
+##############################4 开启celery ############################################
+window下启动 celery  
+python manage.py celery worker -l INFO -P eventlet
+启动定时任务
+#python manage.py celery beat -l INFO
+
+#############################5.任务监控############################################
+python manage.py celery flower
+
+
+
+
+
+
