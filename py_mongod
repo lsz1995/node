@@ -1,0 +1,19 @@
+import  pymongo
+
+
+myclient = pymongo.MongoClient('mongodb://localhost:27017/')
+# 创建数据库
+
+# 查看数据库
+# dblist = myclient.list_database_names()
+
+mydb = myclient["question"]
+
+# 创建数据表
+mycol = mydb["law"]  # id 列表
+
+
+#查找某字段为空
+    temp = ques_col.find({
+        'temp': {'$exists': True}
+    })
