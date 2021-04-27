@@ -194,4 +194,8 @@ a = '<span>123asdasd</span>'
 res = re.findall(r'<span>(.*?)</span>', a)
 print(res)
 2.
+str1='hjggj小明'
+pat=re.compile(r'[\u4e00-\u9fa5]+')
+result=pat.findall(str1)
+print(result)
 
